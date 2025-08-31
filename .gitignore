@@ -3,3 +3,6 @@
 .vscode/settings.json
 .pnpm-store/
 .env
+.env
+backend/server/media/
+backend/server/staticfiles/
