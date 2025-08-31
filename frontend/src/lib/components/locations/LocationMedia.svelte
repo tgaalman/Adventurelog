@@ -218,7 +218,7 @@
 		wikiImageError = '';
 
 		try {
-			const res = await fetch(`/api/generate/img/?name=${encodeURIComponent(imageSearch)}`);
+			const res = await fetch(`/api/generate/img/?name=${encodeURIComponent(imageSearch)}&lang=nl,en`);
 			const data = await res.json();
 
 			if (!res.ok || !data.source) {

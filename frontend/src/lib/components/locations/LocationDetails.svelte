@@ -293,7 +293,7 @@
 
 		try {
 			// Mock Wikipedia API call - replace with actual implementation
-			const response = await fetch(`/api/generate/desc/?name=${encodeURIComponent(location.name)}`);
+			const response = await fetch(`/api/generate/desc/?name=${encodeURIComponent(location.name)}&lang=nl,en`);
 			if (response.ok) {
 				const data = await response.json();
 				location.description = data.extract || '';

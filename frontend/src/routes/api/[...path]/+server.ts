@@ -7,7 +7,7 @@ import { json } from '@sveltejs/kit';
 export async function GET(event) {
 	const { url, params, request, fetch, cookies } = event;
 	const searchParam = url.search ? `${url.search}&format=json` : '?format=json';
-	return handleRequest(url, params, request, fetch, cookies, searchParam);
+	return handleRequest(url, params, request, fetch, cookies, searchParam, true);
 }
 
 /** @type {import('./$types').RequestHandler} */
@@ -62,8 +62,20 @@ async function handleRequest(
 		return json({ error: 'CSRF token is missing or invalid' }, { status: 400 });
 	}
 
-	// Set the new csrf token in both headers and cookies
-	const cookieHeader = `csrftoken=${csrfToken}; Path=/; HttpOnly; SameSite=Lax`;
+	// Merge incoming cookies with refreshed csrftoken while preserving sessionid
+	const incomingCookie = headers.get('cookie') || '';
+	let mergedCookie = incomingCookie;
+	if (incomingCookie.toLowerCase().includes('csrftoken=')) {
+		mergedCookie = incomingCookie.replace(/csrftoken=[^;]*/i, `csrftoken=${csrfToken}`);
+	} else if (incomingCookie) {
+		mergedCookie = `${incomingCookie}; csrftoken=${csrfToken}`;
+	} else {
+		mergedCookie = `csrftoken=${csrfToken}`;
+	}
+
+	// Extract session id to also send as X-Session-Token (middleware support)
+	const sessionMatch = incomingCookie.match(/(?:^|;\s*)sessionid=([^;]+)/i);
+	const sessionId = sessionMatch ? sessionMatch[1] : '';
 
 	try {
 		const response = await fetch(targetUrl, {
@@ -71,7 +83,8 @@ async function handleRequest(
 			headers: {
 				...Object.fromEntries(headers),
 				'X-CSRFToken': csrfToken,
-				Cookie: cookieHeader
+				Cookie: mergedCookie,
+				...(sessionId ? { 'X-Session-Token': sessionId } : {})
 			},
 			body:
 				request.method !== 'GET' && request.method !== 'HEAD' ? await request.text() : undefined,

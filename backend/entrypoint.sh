@@ -86,6 +86,6 @@ cat /code/adventurelog.txt
 
 # Start Gunicorn in foreground
 exec gunicorn main.wsgi:application \
-    --bind [::]:8000 \
+    --bind 0.0.0.0:8000 \
     --workers 2 \
     --timeout 120
